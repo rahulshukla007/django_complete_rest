@@ -2,19 +2,18 @@ from cgitb import lookup
 from codecs import lookup_error
 from select import select
 from django.http import Http404
-from rest_framework import generics, mixins, permissions, authentication
+from rest_framework import generics, mixins
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .permissions import IsStaffEditorPermission
 
 from .models import Product
 from .serializers import ProductSerializers
 from products import serializers
-from api.authentication import TokenAuthentication
+from api.mixins import StaffEditorPermissionMixin
 
-class ProductCreateAPIView(generics.CreateAPIView):
+class ProductCreateAPIView(StaffEditorPermissionMixin, generics.CreateAPIView):
     queryset            = Product.objects.all()
     serializer_class    = ProductSerializers
    
@@ -29,11 +28,10 @@ class ProductCreateAPIView(generics.CreateAPIView):
 
 product_create_view = ProductCreateAPIView.as_view()
 
-class ProductListCreateAPIView(generics.ListCreateAPIView):
+class ProductListCreateAPIView(StaffEditorPermissionMixin, generics.ListCreateAPIView):
     queryset                    = Product.objects.all()
     serializer_class            = ProductSerializers  
-    authentication_classes      = [authentication.SessionAuthentication, TokenAuthentication]
-    permission_classes          = [permissions.IsAdminUser, IsStaffEditorPermission] 
+
 
 
     def perform_create(self, serializer):
@@ -48,14 +46,14 @@ product_list_create_view = ProductListCreateAPIView.as_view()
 
 
 #it is similar to the get request
-class ProductDetailAPIView(generics.RetrieveAPIView):
+class ProductDetailAPIView(StaffEditorPermissionMixin, generics.RetrieveAPIView):
     queryset            = Product.objects.all()
     serializer_class    = ProductSerializers
 
 product_detail_view = ProductDetailAPIView.as_view()
 
 
-class ProductListAPIView(generics.ListAPIView):
+class ProductListAPIView(StaffEditorPermissionMixin, generics.ListAPIView):
     queryset            = Product.objects.all()
     serializer_class    = ProductSerializers
 
@@ -87,7 +85,7 @@ def product_alt_view(request, pk = None, *args, **kwargs):
     return Response({"invalid": "not good data"}, status=400)
 
 
-class ProductUpdateAPIView(generics.UpdateAPIView):
+class ProductUpdateAPIView(StaffEditorPermissionMixin, generics.UpdateAPIView):
     queryset            = Product.objects.all()
     serializer_class    = ProductSerializers
     lookup_field        = 'pk'
@@ -100,7 +98,7 @@ class ProductUpdateAPIView(generics.UpdateAPIView):
 product_update_view = ProductUpdateAPIView.as_view()
 
 
-class ProductDestroyAPIView(generics.DestroyAPIView):
+class ProductDestroyAPIView(StaffEditorPermissionMixin, generics.DestroyAPIView):
     queryset            = Product.objects.all()
     serializer_class    = ProductSerializers
     lookup_field        = 'pk'
@@ -110,7 +108,7 @@ class ProductDestroyAPIView(generics.DestroyAPIView):
 
 product_destroy_view = ProductDestroyAPIView.as_view()
 
-class ProductListModelMixin(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, generics.GenericAPIView):
+class ProductListModelMixin(StaffEditorPermissionMixin, mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, generics.GenericAPIView):
     queryset            = Product.objects.all()
     serializer_class    = ProductSerializers
     lookup_field        = 'pk'  #this will work for retrieve model mixin
